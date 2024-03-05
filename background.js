@@ -61,7 +61,33 @@ function setBadgeTextByStatus()
 
 chrome.storage.onChanged.addListener((changes, namespace) =>
 {
-  setBadgeTextByStatus();
+  for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+
+    chrome.tabs.query({  
+      "status": "complete",
+      "windowType": "normal"}, async function(tabs)
+        {
+          for(t in tabs)
+          {
+            let tab=tabs[t];
+            var chkkey=getDomain(tab.url);
+            if(chkkey==key)
+            {
+              let storage=JSON.parse(newValue);
+              let status=storage.status;
+              _status=status;
+              const nextState = status === true ? 'OFF' : 'ON';
+              await chrome.action.setBadgeText({
+                tabId:tabs[t].id,
+                text: nextState
+              });
+            }
+          }
+           
+        } );
+      }
+
+
  });
 
  chrome.runtime.onMessage.addListener( async function(request, sender, sendResponse) {
