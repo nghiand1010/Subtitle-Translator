@@ -1,6 +1,7 @@
 
 
-var _status=false;
+var _disable=false;
+var _storage;
 function getDomain(url, subdomain) {
   subdomain = subdomain || true;
   if(!url)
@@ -22,10 +23,13 @@ function getDomain(url, subdomain) {
 }
 
   chrome.tabs.onActivated.addListener( function(activeInfo){
+    chrome.storage.sync.get(null).then( (result) => {_storage=result})
     setBadgeTextByStatus();
 });
 
 chrome.tabs.onUpdated.addListener((tabId, change, tab) => {
+  chrome.storage.sync.get(null).then( (result) => {_storage=result})
+
   setBadgeTextByStatus();
 });
 
@@ -42,14 +46,17 @@ function setBadgeTextByStatus()
         let tab=tabs[t];
         var chkkey=getDomain(tab.url);
         chrome.storage.sync.get(chkkey).then(async (result) => {
-          let status=false;
-          if(result[chkkey])
-          {
-            let storage=JSON.parse(result[chkkey]);
-            status=storage.status;
-            _status=status;
-          }
-          const nextState = status === true ? 'OFF' : 'ON';
+        let disable=false;
+         if(result[chkkey])
+        {
+          let value=result[chkkey];
+          _storage=value;
+          disable=value.disable??false;
+         // cmbLangFrom.value=value.sourceLang??'en';
+        //  cmbLangTo.value=value.targetLang??clientLang;
+        }
+          _disable=disable;
+          const nextState = disable === true ? 'OFF' : 'ON';
           await chrome.action.setBadgeText({
             tabId:tabs[t].id,
             text: nextState
@@ -62,7 +69,6 @@ function setBadgeTextByStatus()
 chrome.storage.onChanged.addListener((changes, namespace) =>
 {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
-
     chrome.tabs.query({  
       "status": "complete",
       "windowType": "normal"}, async function(tabs)
@@ -73,10 +79,10 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
             var chkkey=getDomain(tab.url);
             if(chkkey==key)
             {
-              let storage=JSON.parse(newValue);
-              let status=storage.status;
-              _status=status;
-              const nextState = status === true ? 'OFF' : 'ON';
+              _storage[chkkey]=newValue;
+              let disable=newValue.disable;
+              _disable=disable;
+              const nextState = disable === true ? 'OFF' : 'ON';
               await chrome.action.setBadgeText({
                 tabId:tabs[t].id,
                 text: nextState
@@ -90,11 +96,12 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
 
  });
 
- chrome.runtime.onMessage.addListener( async function(request, sender, sendResponse) {
 
-  if (request.method == "getStatus")
+ chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
+
+  if (request.method == "getStorage")
   {
-    sendResponse(_status);
+    sendResponse(_storage);
   }
   else
     sendResponse({}); // snub them.
@@ -102,4 +109,9 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
 
 chrome.runtime.onInstalled.addListener(() => {
   setBadgeTextByStatus();
+  chrome.storage.sync.get(null, function(items) {
+    var allKeys = Object.keys(items);
+    console.log(allKeys);
+});
+  chrome.storage.sync.get(null).then( (result) => {_storage=result})
 });

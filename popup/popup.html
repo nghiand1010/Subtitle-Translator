@@ -74,7 +74,7 @@
     <div class="label">Translate from</div>
     <!-- Tạo một combobox với các tùy chọn ngôn ngữ -->
     <select id="lang-from" class="combobox">
-      <option value="auto">Auto Detect</option>
+      <!-- <option value="auto">Auto Detect</option> -->
       <option value="af">Afrikaans</option>
       <option value="sq">Albanian</option>
       <option value="ar">Arabic</option>
@@ -91,7 +91,7 @@
       <option value="cs">Czech</option>
       <option value="da">Danish</option>
       <option value="nl">Dutch</option>
-      <option value="en">English</option>
+      <option value="en" selected>English</option>
       <option value="et">Estonian</option>
       <option value="tl">Filipino</option>
       <option value="fi">Finnish</option>
@@ -143,7 +143,7 @@
     <select id="lang-to" class="combobox">
       <option value="af">Afrikaans</option>
       <option value="sq">Albanian</option>
-      <option value="ar">Arabic</option>
+      <option value="ar" selected>Arabic</option>
       <option value="hy">Armenian</option>
       <option value="az">Aerbaijani</option>
       <option value="eu">Basque</option>
@@ -204,8 +204,8 @@
   </div>
   <div class="container">
     <!-- Tạo một label với nội dung "Chọn ngôn ngữ" -->
-    <div id="lblEnable" class="label"></div>
-  <input type="checkbox" id="enable" checked>
+    <div class="label">Disable on <span id="lblDomain"></spans></div>
+  <input type="checkbox" id="disable" checked>
   </div>
 
   

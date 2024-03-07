@@ -1,29 +1,69 @@
 // popup.js
 // Get the elements from the popup
-let lblEnable = document.getElementById('lblEnable');
-let chkEnable = document.getElementById('enable');
+let lblDomain = document.getElementById('lblDomain');
+let chkDisable= document.getElementById('disable');
 let cmbLangFrom = document.getElementById('lang-from');
 let cmbLangTo= document.getElementById('lang-to');
 let domain;
+var clientLang = (navigator.language || navigator.userLanguage).substring(0,2); //no ?s necessary
 
-// Define a function to handle the change event
-function handleChange(event) {
-    let chkkey=`${domain}`;
+
+//Todo cần sửa on off theo domain còn thông tin language theo user
+cmbLangFrom.addEventListener("change", ()=>{
+  if(cmbLangFrom.value)
+  chrome.storage.sync.set({sourceLang:cmbLangFrom.value});
+});
+cmbLangTo.addEventListener("change", ()=>{
+  if(cmbLangTo.value)
+  chrome.storage.sync.set({targetLang:cmbLangTo.value});
+});
+
+chkDisable.addEventListener("change",()=> disableChange());
+
+function disableChange()
+{
+  let chkkey=`${domain}`;
     var key = chkkey,
-    testPrefs = JSON.stringify(
-      { status: !event.target.checked}
-    );
+    testPrefs = //JSON.stringify(
+      {
+         disable: chkDisable.checked
+      }
+    //);
     var jsonfile = {};
     jsonfile[key] = testPrefs;
 
-    chrome.storage.sync.set(jsonfile).then(() => {
-        console.log("Value is set");
-      });
-    //.setItem(`${domain}_disable`,JSON.stringify(!event.target.checked));
-  }
+    if (chkDisable.checked)
+    { 
+      chrome.storage.sync.set(jsonfile);
+    }
+    else
+    {
+      chrome.storage.sync.remove(key);
+    }
 
-  // Add the event listener to the checkbox
-  chkEnable.addEventListener("change", handleChange);
+}
+
+async function getStorage(tab)
+{
+   let chkkey=`${domain}`;
+   var result=await chrome.storage.sync.get(chkkey);
+   if(result[chkkey])
+   {
+     console.log('getStorage ',result[chkkey]);
+     let value=result[chkkey];
+     chkDisable.checked=value.disable??false;
+   }
+   let sourceLang=await chrome.storage.sync.get(['sourceLang']);
+   let targetLang=await chrome.storage.sync.get(['targetLang']);
+
+   sourceLang=sourceLang.sourceLang;
+   targetLang=targetLang.targetLang;
+   cmbLangFrom.value=sourceLang??'en';
+   cmbLangTo.value=targetLang??clientLang;
+
+}
+
+
 
 // Load the options from the local storage
 function loadOptions() {
@@ -33,39 +73,21 @@ chrome.tabs.query({ //This method output active URL
     "currentWindow": true,
     "status": "complete",
     "windowType": "normal"
-}, function (tabs) {
+}, async function (tabs) {
     for (tab in tabs) {
         domain=getDomain(tabs[tab].url,true);
-        lblEnable.innerHTML=`Enable on <b>${domain}<b/>`;
-        initControl();
+        lblDomain.innerHTML=`<b>${domain}<b/>`;
+       await initControl(tabs[tab]);
     }
 });
 
 }
 
-function initControl()
+async function initControl(tab)
 {
-     // localStorage.setItem("lastname", "Smith");
-     let chkkey=`${domain}`;
-     console.log('init');
-     chrome.storage.sync.get(chkkey).then((result) => {
-      // console.log("Value is " + result[chkkey]);
-      let disable=false;
-      if(result[chkkey])
-      {
-        let value=JSON.parse( result[chkkey]);
-        disable=value.status;
-      }
-   
-       setCheckboxEnableValue(!disable);
-     });
-     
+   await  getStorage(tab);
 }
 
-function setCheckboxEnableValue(value) {
-    chkEnable.checked=value;
-    console.log('checkbox',chkEnable.checked);
-}
 
 function getDomain(url, subdomain) {
     subdomain = subdomain || true;
@@ -89,4 +111,3 @@ function getDomain(url, subdomain) {
 
 // Call the loadOptions function when the popup is loaded
 document.addEventListener("DOMContentLoaded", loadOptions);
-//document.addEventListener("Loaded", loadOptions);

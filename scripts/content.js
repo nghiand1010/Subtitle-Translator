@@ -1,21 +1,48 @@
 var articles = document.querySelectorAll(".ytp-caption-segment");
 var captionText = document.querySelector('.captions-text');
+var clientLang = (navigator.language || navigator.userLanguage).substring(0, 2);
+
+var sourceLang = 'en';
+var targetLang = clientLang;
+
+var storage;
 
 
-var target = document.querySelector('#ytp-caption-window-container');
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Nhận dữ liệu từ background.js
+    console.log("Value is " + message.data);
+  });
+//var target = document.querySelector('#ytp-caption-window-container');
 var captionWindowText = `<div class="caption-window ytp-caption-window-bottom ytp-caption-window-rollup" id="translate-caption-window" dir="ltr" tabindex="0" lang="en" draggable="true" style="touch-action: none; text-align: left; overflow: hidden; left: 21.2%; width: 454px; height: 40px; bottom: 15%;"></div>`;
 var spantext = `<span id="translate-subtile"  style="overflow-wrap: normal; display: block;"></span>`
 var oldtext = "";
-var composeObserver = new MutationObserver(async function (mutations) {
-    let response=true;
-    if(chrome.runtime?.id)
-    {
+
+async function getStorage() {
+    if (chrome.runtime?.id) {
         response = await chrome.runtime.sendMessage({
-            method: "getStatus", key: window.location.hostname
+            method: "getStorage", key: window.location.hostname
+        });
+        console.log(response);
+        chrome.runtime.sendMessage({
+            method: "getStorage", key: window.location.hostname
+        },function(res){
+            console.log('res',res);
+
+        });
+    }
+}
+
+getStorage();
+
+var composeObserver = new MutationObserver(async function (mutations) {
+    let response = true;
+    if (chrome.runtime?.id) {
+        response = await chrome.runtime.sendMessage({
+            method: "getStorage", key: window.location.hostname
         });
         console.log(response);
     }
-   
+
     if (response) {
         var translateCaptionWindow = document.getElementById('translate-caption-window');
         if (translateCaptionWindow) {
@@ -112,13 +139,16 @@ function addObserverIfDesiredNodeAvailable() {
     composeObserver.observe(composeBox, config);
 }
 
-addObserverIfDesiredNodeAvailable();
+//addObserverIfDesiredNodeAvailable();
 
+// async function getStorage() {
+//     response = await chrome.runtime.sendMessage({
+//         method: "getStorage", key: window.location.hostname
+//     });
+// }
 
 async function translate(sourceText) {
 
-    var sourceLang = 'en';
-    var targetLang = 'vi';
 
 
     if (!sourceText)
