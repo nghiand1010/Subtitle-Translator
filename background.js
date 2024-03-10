@@ -69,6 +69,13 @@ function setBadgeTextByStatus()
 chrome.storage.onChanged.addListener((changes, namespace) =>
 {
   for (let [key, { oldValue, newValue }] of Object.entries(changes)) {
+
+    if( key=='targetLang'||key=='sourceLang')
+    {
+        //Todo check thay đổi
+        return;
+    }
+
     chrome.tabs.query({  
       "status": "complete",
       "windowType": "normal"}, async function(tabs)
@@ -79,8 +86,7 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
             var chkkey=getDomain(tab.url);
             if(chkkey==key)
             {
-              _storage[chkkey]=newValue;
-              let disable=newValue.disable;
+              let disable=newValue?.disable;
               _disable=disable;
               const nextState = disable === true ? 'OFF' : 'ON';
               await chrome.action.setBadgeText({
