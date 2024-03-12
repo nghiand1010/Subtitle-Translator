@@ -40,7 +40,6 @@ function disableChange()
     {
       chrome.storage.sync.remove(key);
     }
-
 }
 
 async function getStorage(tab)
@@ -60,6 +59,8 @@ async function getStorage(tab)
    targetLang=targetLang.targetLang;
    cmbLangFrom.value=sourceLang??'en';
    cmbLangTo.value=targetLang??clientLang;
+   chrome.storage.sync.set({sourceLang:cmbLangFrom.value});
+   chrome.storage.sync.set({targetLang:cmbLangTo.value});
 
 }
 

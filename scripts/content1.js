@@ -2,8 +2,8 @@ var articles = document.querySelectorAll(".ytp-caption-segment");
 var captionText = document.querySelector('.captions-text');
 var clientLang = (navigator.language || navigator.userLanguage).substring(0, 2);
 
-var sourceLang = 'en';
-var targetLang = clientLang;
+var _sourceLang = 'en';
+var _targetLang = clientLang;
 
 var storage;
 
@@ -155,7 +155,7 @@ async function translate(sourceText) {
         return;
 
     // console.log('source',sourceText);
-    var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + sourceLang + "&tl=" + targetLang + "&dt=t&q=" + encodeURI(sourceText);
+    var url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + _sourceLang + "&tl=" + _targetLang + "&dt=t&q=" + encodeURI(sourceText);
 
     const response = await fetch(url);
     const result = await response.json();

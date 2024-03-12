@@ -1,6 +1,5 @@
 
 
-var _disable=false;
 var _storage;
 function getDomain(url, subdomain) {
   subdomain = subdomain || true;
@@ -50,10 +49,7 @@ function setBadgeTextByStatus()
          if(result[chkkey])
         {
           let value=result[chkkey];
-          _storage=value;
           disable=value.disable??false;
-         // cmbLangFrom.value=value.sourceLang??'en';
-        //  cmbLangTo.value=value.targetLang??clientLang;
         }
           _disable=disable;
           const nextState = disable === true ? 'OFF' : 'ON';
@@ -73,9 +69,14 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
     if( key=='targetLang'||key=='sourceLang')
     {
         //Todo check thay đổi
+        _storage[key]=newValue;
         return;
     }
+    
+   // delete storage[key];
+   _storage[key]=newValue;
 
+   
     chrome.tabs.query({  
       "status": "complete",
       "windowType": "normal"}, async function(tabs)
@@ -84,16 +85,26 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
           {
             let tab=tabs[t];
             var chkkey=getDomain(tab.url);
+
             if(chkkey==key)
             {
               let disable=newValue?.disable;
-              _disable=disable;
               const nextState = disable === true ? 'OFF' : 'ON';
               await chrome.action.setBadgeText({
                 tabId:tabs[t].id,
                 text: nextState
               });
-            }
+
+            
+              // chrome.scripting
+              // .executeScript({
+              //   target : {tabId : tabs[t].id},
+              //   func :()=> location.reload(),
+              // })
+              // .then(() => console.log("injected a function"));
+
+              }
+              
           }
            
         } );
@@ -115,9 +126,5 @@ chrome.storage.onChanged.addListener((changes, namespace) =>
 
 chrome.runtime.onInstalled.addListener(() => {
   setBadgeTextByStatus();
-  chrome.storage.sync.get(null, function(items) {
-    var allKeys = Object.keys(items);
-    console.log(allKeys);
-});
   chrome.storage.sync.get(null).then( (result) => {_storage=result})
 });
