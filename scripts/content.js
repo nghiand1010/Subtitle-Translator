@@ -43,6 +43,7 @@ function getDomain(url, subdomain) {
 }
 
 var oldtext = "";
+
 async function translateSubstitle() {
     if (chrome.runtime?.id) {
         response = await chrome.runtime.sendMessage({
@@ -50,6 +51,11 @@ async function translateSubstitle() {
         });
         let domain = getDomain(window.location.href);
       
+        if(!response)
+        {
+            return;
+        }
+
         _sourceLang=response.sourceLang;
         _targetLang=response.targetLang;
         let disable = response[domain] ?? false;
@@ -60,21 +66,23 @@ async function translateSubstitle() {
             }
         }
         else {
-
+            let rollup = document.querySelector('.caption-window.ytp-caption-window-bottom.ytp-caption-window-rollup');
+            if(rollup)
+            {
+                return;
+            }
             let captionText = document.querySelector('.ytp-caption-window-bottom .captions-text');
             
-           
             let translateCaptionWindow = document.getElementById('translate-caption-window');
             if (!captionText && translateCaptionWindow) {
                 translateCaptionWindow.remove();
             }
 
-            if (captionText?.innerText == oldtext) {
+            if (captionText?.innerText?.trim() == oldtext) {
                 return;
             }
 
-            oldtext = captionText.innerText;
-           // console.log(captionText.innerText);
+            oldtext = captionText?.innerText?.trim();
 
             if(translateCaptionWindow)
             {
@@ -84,32 +92,35 @@ async function translateSubstitle() {
              translateCaptionWindow = document.getElementById('translate-caption-window');
             if (!translateCaptionWindow) {
                 console.log("change");
-                let captiondiv = document.querySelector('.caption-window.ytp-caption-window-bottom');
-                if (captiondiv) {
-                    translateCaptionWindow = captiondiv.cloneNode(true);
+                let captionContainer = document.getElementById('ytp-caption-window-container');        
+                if (captionContainer) {
+                
+                    translateCaptionWindow = captionContainer.cloneNode(true);
                     translateCaptionWindow.id = "translate-caption-window";
-                    translateCaptionWindow.style.bottom = '15%';
-                    translateCaptionWindow.childNodes.forEach(async element=>
+                    for await (element of translateCaptionWindow.childNodes)
                     {
-                         element.classList.remove('captions-text');
-                         element.childNodes.forEach(async subEl=>{
-                            subEl.childNodes.forEach(async subSubEl=>{
-                                let text=subSubEl.innerText;
-                                subSubEl.style.color='yellow';
-                                subSubEl.innerText= await translate(text);
-                                
-                            })
-                         });
-                    });
-                    
-                    let parent = document.getElementById('ytp-caption-window-container');
-                    parent.appendChild(translateCaptionWindow);
+                        element.style.bottom = '15%';
+                        for await (elm of element.childNodes){
+                            elm.classList.remove('captions-text');
+                            for await (subEl of elm.childNodes){
+                                for await (subSubEl of subEl.childNodes)
+                                {
+                                    let text=subSubEl.innerText;
+                                    subSubEl.style.color='yellow';
+                                    subSubEl.innerText= await translate(text.trim());
+                                }
+                            }
+                        }
+                      
+                    }
+                
+                   // console.log(translateCaptionWindow.innerText);
+                    let parent = document.getElementById('ytp-caption-window-container');        
+                    parent.parentNode.appendChild(translateCaptionWindow);
                 }
-
             }
+            
           
-
-
         }
 
     }
@@ -149,13 +160,13 @@ function checkContainSubstite() {
     if (!caption) {
         waitForElement(captionID).then((element) => {
             currentElement = element;
-            console.log("add event");
+            console.log("add event ", window.location.href);
             composeObserver.observe(element, config);
         });
     }
     else {
         if (currentElement != caption) {
-            console.log("add new event");
+            console.log("add new event ", window.location.href);
             composeObserver.observe(caption, config);
             currentElement = caption;
         }

@@ -21,6 +21,7 @@
     "content_scripts": [
         {
           "js": ["scripts/content.js"],
+          "allFrames" : true,
           "matches": ["<all_urls>"]
         }
       ]
